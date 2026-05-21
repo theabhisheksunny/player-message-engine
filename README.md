@@ -14,7 +14,7 @@ cd player-message-engine
 mvn clean compile
 ```
 
-## Run — Same Process Mode
+## Run — Same Process Mode (Git Bash, WSL, etc.)
 
 Both players run as threads in a single JVM.
 
@@ -27,7 +27,7 @@ Or directly:
 java -cp target/classes com.messaging.SameProcessMain
 ```
 
-## Run — Separate Process Mode
+## Run — Separate Process Mode (Git Bash, WSL, etc.)
 
 Each player runs in its own JVM (different PIDs).
 
