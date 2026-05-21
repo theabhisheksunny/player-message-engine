@@ -60,15 +60,35 @@ public class SeparateProcessMain {
     private static void startClient() {
         System.out.println("Player1 (client/initiator) | PID: " + ProcessHandle.current().pid());
 
-        try {
-            Socket connection = new Socket("localhost", PORT);
-            System.out.println("Connected to Player2.\n");
+        int maxRetries = 3;
+        Socket connection = null;
 
+        for (int attempt = 1; attempt <= maxRetries; attempt++) {
+            try {
+                connection = new Socket("localhost", PORT);
+                System.out.println("Connected to Player2.\n");
+                break;
+            } catch (IOException e) {
+                System.err.println("Connection attempt " + attempt + " of " + maxRetries
+                        + " failed: " + e.getMessage());
+                if (attempt == maxRetries) {
+                    System.err.println("Could not connect to server after " + maxRetries + " attempts. Exiting.");
+                    System.exit(1);
+                }
+                try {
+                    Thread.sleep(5000); // wait 5 seconds before retrying
+                } catch (InterruptedException ie) {
+                    Thread.currentThread().interrupt();
+                    System.exit(1);
+                }
+            }
+        }
+
+        try {
             SocketChannel channel = new SocketChannel(connection);
             Player player1 = new Player("Player1", channel, channel, true, MAX_MESSAGES);
             player1.run();
             channel.close();
-
         } catch (IOException e) {
             System.err.println("Client error: " + e.getMessage());
             System.exit(1);
