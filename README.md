@@ -1,6 +1,6 @@
 # Player Message Engine
 
-Two players exchange messages following a simple protocol: each reply contains the received text concatenated with the sender's message counter. The initiator controls the pace (press Enter to send). Program stops after 10 round-trip exchanges.
+Two players exchange messages following a simple protocol: each reply contains the received text concatenated with the sender's message counter. The initiator sends the first message, then both players automatically exchange messages until 10 round-trips complete. Program stops gracefully.
 
 ## Prerequisites
 
@@ -27,8 +27,6 @@ Or directly:
 java -cp target/classes com.messaging.SameProcessMain
 ```
 
-Press Enter 10 times to drive the conversation.
-
 ## Run — Separate Process Mode
 
 Each player runs in its own JVM (different PIDs).
@@ -50,7 +48,12 @@ Terminal 2:
 java -cp target/classes com.messaging.SeparateProcessMain client
 ```
 
-Press Enter in Terminal 2 to send each message. Both terminals show their player's activity. After 10 exchanges both processes exit.
+If the server might not be ready yet, use the `--retry` flag (retries up to 3 times with 2s delay):
+```
+java -cp target/classes com.messaging.SeparateProcessMain client --retry
+```
+
+Both terminals show their player's activity. After 10 exchanges both processes exit.
 
 ## Design
 

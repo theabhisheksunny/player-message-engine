@@ -12,24 +12,34 @@ import java.net.Socket;
  * - Sets up TCP socket communication between the two processes.
  * - The server (Player2) listens and waits for the client to connect.
  * - The client (Player1/initiator) connects and starts the message exchange.
+ * - Optionally retries connection if --retry flag is passed with client.
  * - Both processes terminate gracefully after the exchange completes.
+ *
+ * Usage:
+ *   java SeparateProcessMain server
+ *   java SeparateProcessMain client
+ *   java SeparateProcessMain client --retry
  */
 public class SeparateProcessMain {
 
     private static final int PORT = 9876;
     private static final int MAX_MESSAGES = 10;
+    private static final int MAX_RETRIES = 3;
+    private static final int RETRY_DELAY_MS = 5000;
 
     public static void main(String[] args) {
         if (args.length == 0) {
-            System.err.println("Usage: java SeparateProcessMain <server|client>");
+            System.err.println("Usage: java SeparateProcessMain <server|client> [--retry]");
             System.exit(1);
         }
 
         String role = args[0].toLowerCase();
+        boolean retry = args.length > 1 && args[1].equalsIgnoreCase("--retry");
+
         if (role.equals("server")) {
             startServer();
         } else if (role.equals("client")) {
-            startClient();
+            startClient(retry);
         } else {
             System.err.println("Invalid argument. Use 'server' or 'client'.");
             System.exit(1);
@@ -57,32 +67,41 @@ public class SeparateProcessMain {
         System.out.println("\nPlayer2 process finished gracefully.");
     }
 
-    private static void startClient() {
+    private static void startClient(boolean retry) {
         System.out.println("Player1 (client/initiator) | PID: " + ProcessHandle.current().pid());
 
-        int maxRetries = 3;
         Socket connection = null;
 
-        for (int attempt = 1; attempt <= maxRetries; attempt++) {
-            try {
-                connection = new Socket("localhost", PORT);
-                System.out.println("Connected to Player2.\n");
-                break;
-            } catch (IOException e) {
-                System.err.println("Connection attempt " + attempt + " of " + maxRetries
-                        + " failed: " + e.getMessage());
-                if (attempt == maxRetries) {
-                    System.err.println("Could not connect to server after " + maxRetries + " attempts. Exiting.");
-                    System.exit(1);
-                }
+        if (retry) {
+            for (int attempt = 1; attempt <= MAX_RETRIES; attempt++) {
                 try {
-                    Thread.sleep(5000); // wait 5 seconds before retrying
-                } catch (InterruptedException ie) {
-                    Thread.currentThread().interrupt();
-                    System.exit(1);
+                    connection = new Socket("localhost", PORT);
+                    break;
+                } catch (IOException e) {
+                    System.err.println("Connection attempt " + attempt + " of " + MAX_RETRIES
+                            + " failed: " + e.getMessage());
+                    if (attempt == MAX_RETRIES) {
+                        System.err.println("Could not connect after " + MAX_RETRIES + " attempts. Exiting.");
+                        System.exit(1);
+                    }
+                    try {
+                        Thread.sleep(RETRY_DELAY_MS);
+                    } catch (InterruptedException ie) {
+                        Thread.currentThread().interrupt();
+                        System.exit(1);
+                    }
                 }
             }
+        } else {
+            try {
+                connection = new Socket("localhost", PORT);
+            } catch (IOException e) {
+                System.err.println("Client error: " + e.getMessage());
+                System.exit(1);
+            }
         }
+
+        System.out.println("Connected to Player2.\n");
 
         try {
             SocketChannel channel = new SocketChannel(connection);
