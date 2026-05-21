@@ -48,7 +48,7 @@ Terminal 2:
 java -cp target/classes com.messaging.SeparateProcessMain client
 ```
 
-If the server might not be ready yet, use the `--retry` flag (retries up to 3 times with 2s delay):
+If the server might not be ready yet, use the `--retry` flag (retries up to 3 times with 5s delay):
 ```
 java -cp target/classes com.messaging.SeparateProcessMain client --retry
 ```
